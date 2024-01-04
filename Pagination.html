@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form and Table with DOM Manipulation</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background-color: #fff;
+        }
+
+        table, th, td {
+            border: 1px solid #161717;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #859dcd;
+            color: white;
+        }
+
+        form {
+            margin: 20px;
+            padding: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #859dcd;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #65799e;
+        }
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+        .pagination li {
+            margin: 5px;
+            cursor: pointer;
+            border: 1px solid #859dcd;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .pagination .active {
+            font-weight: bold;
+            background-color: #859dcd;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<form id="dataForm">
+    <label for="recordId">ID:</label>
+    <input type="text" id="recordId" required>
+    
+    <label for="recordName">Name:</label>
+    <input type="text" id="recordName" required>
+    
+    <label for="recordEmail">Email:</label>
+    <input type="text" id="recordEmail" required>
+
+    <button type="button" onclick="addRecord()">Add Record</button>
+</form>
+
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Table rows will be added dynamically -->
+    </tbody>
+</table>
+
+<ul class="pagination" id="pagination"></ul>
+
+<script>
+    const itemsPerPage = 10; // Adjust as needed
+    let currentPage = 1;
+
+    async function fetchData() {
+        try {
+            const response = await fetch('https://gist.githubusercontent.com/rvsp/add40254aa126f045837fa5b51f47f1f/raw/4d724bfabf4cce7379a386e23bef6576ab99a2f9/pagination.json');
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            return [];
+        }
+    }
+
+    async function addRecord() {
+        // Fetch data from the API
+        const apiData = await fetchData();
+
+        // Get the table body
+        const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+
+        // Clear existing rows
+        tableBody.innerHTML = '';
+
+        // Calculate start and end index based on the current page
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        // Iterate over the fetched data and add rows to the table
+        apiData.slice(startIndex, endIndex).forEach((record) => {
+            const newRow = tableBody.insertRow(tableBody.rows.length);
+            const cells = [
+                newRow.insertCell(0),
+                newRow.insertCell(1),
+                newRow.insertCell(2),
+            ];
+
+            // Populate the cells with data from the API
+            cells[0].innerHTML = record.id;
+            cells[1].innerHTML = record.name;
+            cells[2].innerHTML = record.email;
+        });
+
+        // Clear the form fields
+        document.getElementById('recordId').value = '';
+        document.getElementById('recordName').value = '';
+        document.getElementById('recordEmail').value = '';
+
+        // Generate pagination links
+        generatePagination(apiData.length);
+    }
+
+    function generatePagination(totalItems) {
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const paginationElement = document.getElementById('pagination');
+        paginationElement.innerHTML = '';
+
+        for (let i = 1; i <= totalPages; i++) {
+            const li = document.createElement('li');
+            li.textContent = i;
+            li.addEventListener('click', () => {
+                currentPage = i;
+                addRecord();
+            });
+
+            if (i === currentPage) {
+                li.classList.add('active');
+            }
+
+            paginationElement.appendChild(li);
+        }
+    }
+
+    // Run the initial data fetch and update the table
+    addRecord();
+</script>
+
+</body>
+</html>
